@@ -122,7 +122,7 @@ function renderQuestion() {
   const isJudge = q.t === '判断题';
   let optsHtml = '';
   const answered = answerMap[q.i];
-  const showFeedback = !!answered;
+  const showFeedback = true;  // 直接显示答案，便于复习
   if (q.o) {
     const opts = q.o.split('||');
     for (const optStr of opts) {
