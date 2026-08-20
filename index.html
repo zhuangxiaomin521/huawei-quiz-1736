@@ -19,6 +19,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Noto Sans CJK SC','Microsof
 .type-tab { flex:1; min-width:72px; padding:8px 6px; border:none; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; background:var(--bg); color:var(--text); white-space:nowrap; transition:all .2s; }
 .type-tab .cnt { font-size:11px; opacity:.7; display:block; }
 .type-tab.active { background:var(--green); color:#fff; }
+.type-tab.review-tab.active { background:var(--orange); color:#fff; }
 
 .content { padding:128px 12px 84px; }
 .q-card { background:var(--card); border-radius:12px; padding:20px 16px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
@@ -66,6 +67,7 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Noto Sans CJK SC','Microsof
   <button class="type-tab" data-type="单选题" onclick="filterByType('单选题')">单选题<span class="cnt">192</span></button>
   <button class="type-tab" data-type="多选题" onclick="filterByType('多选题')">多选题<span class="cnt">44</span></button>
   <button class="type-tab" data-type="判断题" onclick="filterByType('判断题')">判断题<span class="cnt">82</span></button>
+  <button class="type-tab review-tab" id="reviewTab" data-type="复习" onclick="filterByType('复习')">复习<span class="cnt" id="reviewCnt">0</span></button>
 </div>
 
 <div class="content" id="content">
@@ -107,14 +109,18 @@ let currentIdx = 0;
 })();
 
 function getFiltered() {
+  if (currentType === '复习') return ALL.filter(q => reviewSet.has(q.i));
   if (currentType === '全部') return ALL;
   return ALL.filter(q => q.t === currentType);
 }
 
 function renderQuestion() {
   const list = getFiltered();
+  updateReviewCnt();
   if (list.length === 0) {
-    document.getElementById('questionContainer').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-light)">该类型暂无题目</div>';
+    const msg = currentType === '复习' ? '还没有标记复习的题目，浏览题目时点"⭐ 标记不熟悉"即可添加' : '该类型暂无题目';
+    document.getElementById('questionContainer').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-light)">' + msg + '</div>';
+    document.getElementById('progressInfo').textContent = '0 / 0';
     return;
   }
   const q = list[currentIdx];
@@ -147,7 +153,7 @@ function renderQuestion() {
         '<span class="opt-text">' + escapeHtml(text) + mark + wrongMark + '</span></div>';
     }
   }
-  let answerHtml = showFeedback ? '<div class="q-answer show">' : '<div class="q-answer">';
+  let answerHtml =  '<div class="q-answer show">' +
     '<div class="label">正确答案：' + escapeHtml(q.a) + '</div>' +
     (q.at && q.at !== q.a ? '<div class="text">' + escapeHtml(q.at) + '</div>' : '') +
     '</div>';
@@ -224,6 +230,12 @@ function toggleReview(idx) {
   if (cb.checked) reviewSet.add(idx);
   else reviewSet.delete(idx);
   saveReview();
+  updateReviewCnt();
+}
+
+function updateReviewCnt() {
+  const el = document.getElementById('reviewCnt');
+  if (el) el.textContent = reviewSet.size;
 }
 
 function loadFullQuestion() {
